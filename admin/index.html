@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Graduation Photos CMS</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+  <!-- LOGIN SCREEN -->
+  <div class="login-screen" id="loginScreen">
+    <div class="login-card">
+      <div class="login-logo">STUDIO</div>
+      <p class="login-sub">Content Management</p>
+      <form id="loginForm">
+        <input type="password" id="passwordInput" placeholder="Admin password" autocomplete="current-password" required>
+        <button type="submit" class="btn-admin">Sign In</button>
+      </form>
+      <p class="login-error" id="loginError"></p>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL -->
+  <div class="admin-panel" id="adminPanel" style="display:none;">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-logo">STUDIO</span>
+        <span class="sidebar-badge">CMS</span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" data-section="hero">
+          <span class="sidebar-icon">◆</span> Hero
+        </a>
+        <a href="#" class="sidebar-link" data-section="portfolio">
+          <span class="sidebar-icon">▦</span> Portfolio
+        </a>
+        <a href="#" class="sidebar-link" data-section="differentiator">
+          <span class="sidebar-icon">✦</span> Differentiator
+        </a>
+        <a href="#" class="sidebar-link" data-section="pricing">
+          <span class="sidebar-icon">◈</span> Pricing
+        </a>
+        <a href="#" class="sidebar-link" data-section="process">
+          <span class="sidebar-icon">→</span> Process
+        </a>
+        <a href="#" class="sidebar-link" data-section="cta">
+          <span class="sidebar-icon">▸</span> CTA
+        </a>
+        <a href="#" class="sidebar-link" data-section="branding">
+          <span class="sidebar-icon">●</span> Branding
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" target="_blank" class="sidebar-link">↗ View Site</a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 class="admin-title" id="sectionTitle">Hero</h1>
+        <div class="admin-actions">
+          <span class="save-status" id="saveStatus"></span>
+          <button class="btn-admin" id="saveBtn" onclick="saveContent()">Save Changes</button>
+        </div>
+      </header>
+
+      <div class="admin-content" id="adminContent">
+
+        <!-- HERO SECTION -->
+        <div class="cms-section active" data-section="hero">
+          <div class="field-group">
+            <label class="field-label">Eyebrow Text</label>
+            <input type="text" class="field-input" data-path="hero.eyebrow">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Headline <span class="field-hint">Use &lt;em&gt; for italic emphasis</span></label>
+            <input type="text" class="field-input" data-path="hero.headline">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Subheadline</label>
+            <textarea class="field-textarea" rows="2" data-path="hero.subheadline"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Schools</label>
+            <input type="text" class="field-input" data-path="hero.schools">
+          </div>
+        </div>
+
+        <!-- PORTFOLIO SECTION -->
+        <div class="cms-section" data-section="portfolio">
+          <div class="field-group">
+            <label class="field-label">Portfolio Images</label>
+            <p class="field-hint" style="margin-bottom: 1rem;">Drag and drop images or click to upload. Images appear in the order shown.</p>
+            <div class="upload-zone" id="uploadZone">
+              <span class="upload-icon">+</span>
+              <span class="upload-text">Drop images here or click to upload</span>
+              <input type="file" id="imageUpload" accept="image/*" multiple style="display:none;">
+            </div>
+            <div class="portfolio-preview" id="portfolioPreview"></div>
+          </div>
+        </div>
+
+        <!-- DIFFERENTIATOR SECTION -->
+        <div class="cms-section" data-section="differentiator">
+          <div class="field-group">
+            <label class="field-label">Section Title</label>
+            <input type="text" class="field-input" data-path="differentiator.title">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Paragraph 1</label>
+            <textarea class="field-textarea" rows="4" data-path="differentiator.paragraphs.0"></textarea>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Paragraph 2</label>
+            <textarea class="field-textarea" rows="3" data-path="differentiator.paragraphs.1"></textarea>
+          </div>
+        </div>
+
+        <!-- PRICING SECTION -->
+        <div class="cms-section" data-section="pricing">
+          <div class="pricing-tiers-editor" id="pricingTiersEditor"></div>
+          <hr class="field-divider">
+          <h3 class="subsection-title">Add-Ons</h3>
+          <div class="addons-editor" id="addonsEditor"></div>
+          <div class="field-group">
+            <label class="field-label">Pricing Note</label>
+            <input type="text" class="field-input" data-path="pricing.note">
+          </div>
+        </div>
+
+        <!-- PROCESS SECTION -->
+        <div class="cms-section" data-section="process">
+          <div class="process-editor" id="processEditor"></div>
+        </div>
+
+        <!-- CTA SECTION -->
+        <div class="cms-section" data-section="cta">
+          <div class="field-group">
+            <label class="field-label">Eyebrow</label>
+            <input type="text" class="field-input" data-path="cta.eyebrow">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Headline</label>
+            <input type="text" class="field-input" data-path="cta.headline">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Note Text</label>
+            <input type="text" class="field-input" data-path="cta.note">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Social Handle</label>
+            <input type="text" class="field-input" data-path="cta.socialHandle">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Social Link URL</label>
+            <input type="text" class="field-input" data-path="cta.socialLink">
+          </div>
+        </div>
+
+        <!-- BRANDING SECTION -->
+        <div class="cms-section" data-section="branding">
+          <div class="field-group">
+            <label class="field-label">Site Name</label>
+            <input type="text" class="field-input" data-path="branding.siteName">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Booking Link URL</label>
+            <input type="text" class="field-input" data-path="branding.bookingLink">
+          </div>
+          <div class="field-group">
+            <label class="field-label">Group Inquiry Link URL</label>
+            <input type="text" class="field-input" data-path="branding.groupInquiryLink">
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+{
+  "hero": {
+    "eyebrow": "Class of 2026",
+    "headline": "Editorial Graduation Photos That Don't Look <em>Basic</em>",
+    "subheadline": "Graduation portraits for students who want a polished, fashion-forward look.",
+    "schools": "UCLA · USC · UCI · UCSD · Stanford · LMU · SDSU"
+  },
+  "differentiator": {
+    "title": "Not the Typical Graduation Shoot",
+    "paragraphs": [
+      "Most graduation photos look the same — stiff poses, harsh lighting, generic backdrops. We take a different approach. Every session is styled like an editorial shoot: intentional lighting, dynamic movement, and compositions that belong in a magazine, not a yearbook.",
+      "You've spent years earning this moment. Your photos should match the energy."
+    ]
+  },
+  "pricing": {
+    "tiers": [
+      {
+        "name": "Solo",
+        "price": "$295",
+        "per": "",
+        "featured": false,
+        "features": [
+          "1-hour editorial session",
+          "1 campus or off-site location",
+          "2 outfit changes",
+          "30+ edited digital images",
+          "Online gallery delivery"
+        ],
+        "buttonText": "Book Solo Session"
+      },
+      {
+        "name": "Duo",
+        "price": "$225",
+        "per": "/person",
+        "featured": false,
+        "features": [
+          "1.5-hour editorial session",
+          "Solo + paired shots",
+          "2 outfit changes each",
+          "40+ edited digital images",
+          "Individual online galleries"
+        ],
+        "buttonText": "Book Duo Session"
+      },
+      {
+        "name": "Group",
+        "nameSub": "(3+)",
+        "price": "$175",
+        "per": "/person",
+        "featured": true,
+        "features": [
+          "2-hour editorial session",
+          "Solo + group compositions",
+          "2 outfit changes each",
+          "50+ edited digital images",
+          "Individual + group galleries"
+        ],
+        "buttonText": "Book Group Session"
+      }
+    ],
+    "addons": [
+      {
+        "name": "Rush Delivery",
+        "detail": "48-hour turnaround"
+      },
+      {
+        "name": "Highlight Reel",
+        "detail": "30-sec cinematic edit"
+      },
+      {
+        "name": "Extra Outfit / Location",
+        "detail": "Per additional change"
+      }
+    ],
+    "note": "Group bookings prioritized — book together and save."
+  },
+  "process": [
+    {
+      "number": "01",
+      "title": "Choose Your Session",
+      "desc": "Solo, duo, or group — pick the package that fits."
+    },
+    {
+      "number": "02",
+      "title": "Select Your Date",
+      "desc": "Browse available dates and lock in your session."
+    },
+    {
+      "number": "03",
+      "title": "Secure with Deposit",
+      "desc": "A small deposit holds your spot — balance due day-of."
+    },
+    {
+      "number": "04",
+      "title": "Show Up & Shine",
+      "desc": "We handle the rest. You just bring the energy."
+    }
+  ],
+  "cta": {
+    "eyebrow": "Spring 2026 — Spots Filling Fast",
+    "headline": "Reserve Your Graduation Session",
+    "note": "Questions? DM us @studio — we respond within 24 hours.",
+    "socialHandle": "@studio",
+    "socialLink": "#"
+  },
+  "portfolio": [
+    "images/hero.png",
+    "images/portfolio-1.png"
+  ],
+  "branding": {
+    "siteName": "STUDIO",
+    "bookingLink": "#",
+    "groupInquiryLink": "#"
+  }
+}
