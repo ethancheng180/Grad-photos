@@ -1,13 +1,40 @@
+require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { createClient } = require('@supabase/supabase-js');
+const { Resend } = require('resend');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'studio2026';
 const CONTENT_FILE = path.join(__dirname, 'content.json');
 const IMAGES_DIR = path.join(__dirname, 'images');
+
+// --- Supabase & Email Setup ---
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
+// Optional: Email transport via Resend
+const resendApiKey = process.env.RESEND_API_KEY;
+const resend = resendApiKey ? new Resend(resendApiKey) : null;
+
+async function sendAdminNotification(leadDetails) {
+  if (!resend || !process.env.ADMIN_EMAIL) return;
+  
+  try {
+    await resend.emails.send({
+      from: 'Grad Photos System <onboarding@resend.dev>',
+      to: process.env.ADMIN_EMAIL,
+      subject: `New Lead: ${leadDetails.name} - ${leadDetails.shoot_type}`,
+      text: `You have a new inquiry!\n\nName: ${leadDetails.name}\nEmail: ${leadDetails.email}\nPhone: ${leadDetails.phone || 'N/A'}\nType: ${leadDetails.shoot_type}\nDate: ${leadDetails.event_date || 'N/A'}\nBudget: ${leadDetails.budget || 'N/A'}\nMessage:\n${leadDetails.message}\n`
+    });
+  } catch (err) {
+    console.error('Failed to send Resend email:', err);
+  }
+}
 
 // --- Middleware ---
 app.use(express.json({ limit: '10mb' }));
@@ -102,6 +129,89 @@ app.delete('/api/image', requireAuth, (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete image' });
+  }
+});
+
+// --- Lead Management Routes (Supabase) ---
+
+// POST new inquiry (Public)
+app.post('/api/inquire', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  try {
+    const leadData = req.body; // name, email, phone, shoot_type, budget, event_date, message, source
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([leadData])
+      .select();
+
+    if (error) throw error;
+    
+    // Send email notification in the background
+    sendAdminNotification(leadData);
+
+    res.json({ success: true, lead: data[0] });
+  } catch (err) {
+    console.error('Lead insert error:', err);
+    res.status(500).json({ error: 'Failed to submit inquiry' });
+  }
+});
+
+// GET all leads (Protected)
+app.get('/api/leads', requireAuth, async (req, res) => {
+  if (!supabase) return res.json([]); // Return empty array if not configured to prevent UI crashes
+  try {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    res.json(data);
+  } catch (err) {
+    console.error('Fetch leads error:', err);
+    res.status(500).json({ error: 'Failed to fetch leads' });
+  }
+});
+
+// PUT update lead (Protected)
+app.put('/api/leads/:id', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  try {
+    const { id } = req.params;
+    const updates = req.body; // status, notes
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .update(updates)
+      .eq('id', id)
+      .select();
+
+    if (error) throw error;
+    res.json({ success: true, lead: data[0] });
+  } catch (err) {
+    console.error('Update lead error:', err);
+    res.status(500).json({ error: 'Failed to update lead' });
+  }
+});
+
+// POST manual Calendly booking (Protected)
+app.post('/api/leads/manual', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  try {
+    const leadData = req.body;
+    leadData.booking_type = 'calendly_manual';
+    leadData.status = 'booked';
+    
+    const { data, error } = await supabase
+      .from('leads')
+      .insert([leadData])
+      .select();
+
+    if (error) throw error;
+    res.json({ success: true, lead: data[0] });
+  } catch (err) {
+    console.error('Manual booking error:', err);
+    res.status(500).json({ error: 'Failed to add manual booking' });
   }
 });
 

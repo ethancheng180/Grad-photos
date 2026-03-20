@@ -110,4 +110,65 @@
   } else {
     init();
   }
+
+  // --- INQUIRY MODAL LOGIC ---
+  window.openInquiryModal = function() {
+    document.getElementById('inquiryModal').classList.add('active');
+    document.body.style.overflow = 'hidden'; // prevent background scrolling
+  };
+
+  window.closeInquiryModal = function() {
+    document.getElementById('inquiryModal').classList.remove('active');
+    document.body.style.overflow = '';
+  };
+
+  window.submitInquiry = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('inqSubmitBtn');
+    const successMsg = document.getElementById('inqSuccess');
+    const errorMsg = document.getElementById('inqError');
+
+    // Reset messages
+    successMsg.style.display = 'none';
+    errorMsg.style.display = 'none';
+    
+    btn.disabled = true;
+    btn.textContent = 'Sending...';
+
+    const data = {
+      name: document.getElementById('inqName').value,
+      email: document.getElementById('inqEmail').value,
+      phone: document.getElementById('inqPhone').value,
+      shoot_type: document.getElementById('inqType').value,
+      event_date: document.getElementById('inqDate').value,
+      budget: document.getElementById('inqBudget').value,
+      message: document.getElementById('inqMessage').value,
+      source: window.location.pathname
+    };
+
+    try {
+      const res = await fetch('/api/inquire', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      const result = await res.json();
+      if (result.success) {
+        successMsg.style.display = 'block';
+        document.getElementById('inquiryForm').reset();
+        setTimeout(window.closeInquiryModal, 3000);
+      } else {
+        errorMsg.textContent = result.error || 'Failed to send inquiry.';
+        errorMsg.style.display = 'block';
+      }
+    } catch (err) {
+      errorMsg.textContent = 'Network error. Please try again.';
+      errorMsg.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Send Inquiry';
+    }
+  };
+
 })();

@@ -919,3 +919,122 @@ a:hover {
     margin-bottom: 3rem;
   }
 }
+
+/* --- INQUIRY MODAL --- */
+.inquiry-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.inquiry-modal.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 10, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-content {
+  position: relative;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--white);
+  padding: 3rem 2.5rem;
+  transform: translateY(20px);
+  transition: transform 0.4s var(--ease-out);
+  box-shadow: 0 40px 100px rgba(0,0,0,0.3);
+}
+
+.inquiry-modal.active .modal-content {
+  transform: translateY(0);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--mid-gray);
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.modal-close:hover {
+  color: var(--black);
+}
+
+.modal-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.modal-header h3 {
+  font-family: var(--font-serif);
+  font-size: 2rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.modal-header p {
+  font-size: 0.9rem;
+  color: var(--mid-gray);
+}
+
+#inquiryForm .form-group {
+  margin-bottom: 1.2rem;
+}
+
+#inquiryForm label {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+  color: var(--black);
+}
+
+#inquiryForm input,
+#inquiryForm select,
+#inquiryForm textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--warm-gray);
+  background: var(--off-white);
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: var(--black);
+  transition: border-color 0.3s ease;
+  outline: none;
+}
+
+#inquiryForm input:focus,
+#inquiryForm select:focus,
+#inquiryForm textarea:focus {
+  border-color: var(--black);
+}
+
+#inquiryForm textarea {
+  resize: vertical;
+}
+
+#inquiryForm .btn {
+  margin-top: 1rem;
+}

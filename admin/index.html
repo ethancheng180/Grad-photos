@@ -55,6 +55,9 @@
         <a href="#" class="sidebar-link" data-section="branding">
           <span class="sidebar-icon">●</span> Branding
         </a>
+        <a href="#" class="sidebar-link" data-section="leads">
+          <span class="sidebar-icon">◉</span> Leads
+        </a>
       </nav>
       <div class="sidebar-footer">
         <a href="/" target="_blank" class="sidebar-link">↗ View Site</a>
@@ -65,7 +68,7 @@
     <main class="admin-main">
       <header class="admin-header">
         <h1 class="admin-title" id="sectionTitle">Hero</h1>
-        <div class="admin-actions">
+        <div class="admin-actions" id="adminActionsContainer">
           <span class="save-status" id="saveStatus"></span>
           <button class="btn-admin" id="saveBtn" onclick="saveContent()">Save Changes</button>
         </div>
@@ -180,8 +183,48 @@
           </div>
         </div>
 
+        <!-- LEADS SECTION -->
+        <div class="cms-section" data-section="leads">
+          <div class="leads-controls">
+            <button class="btn-admin btn-sm" onclick="fetchLeads()">↺ Refresh</button>
+            <button class="btn-admin btn-sm btn-outline-admin" onclick="openManualBookingModal()">+ Add Manual Booking</button>
+          </div>
+          <div class="leads-container" id="leadsContainer">
+            <div class="loading-state">Loading leads...</div>
+          </div>
+        </div>
+
       </div>
     </main>
+  </div>
+
+  <!-- ADMIN MANUAL BOOKING MODAL -->
+  <div class="admin-modal-overlay" id="manualBookingModal" style="display:none;">
+    <div class="admin-modal">
+      <h3>Add Manual Booking</h3>
+      <form id="manualBookingForm" onsubmit="submitManualBooking(event)">
+        <div class="field-group">
+          <label class="field-label">Name</label>
+          <input type="text" class="field-input" id="mName" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Email</label>
+          <input type="email" class="field-input" id="mEmail" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Shoot Type</label>
+          <input type="text" class="field-input" id="mType" placeholder="e.g. Solo Graduation" required>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Notes</label>
+          <textarea class="field-textarea" id="mNotes" rows="2"></textarea>
+        </div>
+        <div class="admin-modal-actions">
+          <button type="button" class="btn-admin btn-sm btn-outline-admin" onclick="closeManualBookingModal()">Cancel</button>
+          <button type="submit" class="btn-admin btn-sm" id="mSubmitBtn">Add Booking</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <script src="admin.js"></script>

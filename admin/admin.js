@@ -54,6 +54,14 @@
       document.querySelector(`.cms-section[data-section="${section}"]`).classList.add('active');
 
       sectionTitle.textContent = link.textContent.trim();
+
+      // Special handling for Leads section
+      if (section === 'leads') {
+        document.getElementById('adminActionsContainer').style.display = 'none';
+        if (window.fetchLeads) window.fetchLeads();
+      } else {
+        document.getElementById('adminActionsContainer').style.display = 'flex';
+      }
     });
   });
 
@@ -354,4 +362,135 @@
     saveStatus.classList.add('visible');
     setTimeout(() => saveStatus.classList.remove('visible'), 3000);
   }
+
+  // --- LEADS MANAGEMENT ---
+  const leadsContainer = document.getElementById('leadsContainer');
+
+  window.fetchLeads = async function() {
+    leadsContainer.innerHTML = '<div class="loading-state">Loading leads...</div>';
+    try {
+      const res = await fetch('/api/leads', {
+        headers: { 'X-Admin-Password': password }
+      });
+      const leads = await res.json();
+      renderLeads(leads);
+    } catch (err) {
+      console.error('Failed to fetch leads:', err);
+      leadsContainer.innerHTML = '<div class="loading-state">Failed to load leads</div>';
+    }
+  };
+
+  function renderLeads(leads) {
+    if (!leads || leads.length === 0) {
+      leadsContainer.innerHTML = '<div class="loading-state">No leads found</div>';
+      return;
+    }
+
+    leadsContainer.innerHTML = leads.map(lead => `
+      <div class="lead-card">
+        <div class="lead-header">
+          <div class="lead-info">
+            <h4>${lead.name} <span class="status-badge ${lead.status || 'new'}">${lead.status || 'new'}</span></h4>
+            <div class="lead-meta">
+              <span><strong>Email:</strong> ${lead.email}</span>
+              <span><strong>Phone:</strong> ${lead.phone || 'N/A'}</span>
+              <span><strong>Type:</strong> ${lead.shoot_type}</span>
+              <span><strong>Date:</strong> ${lead.event_date ? new Date(lead.event_date).toLocaleDateString() : 'N/A'}</span>
+              <span><strong>Budget:</strong> ${lead.budget || 'N/A'}</span>
+            </div>
+          </div>
+          <div class="lead-meta" style="text-align:right;">
+            <span><strong>Date Added:</strong> ${new Date(lead.created_at).toLocaleDateString()}</span>
+            <span><strong>Source:</strong> ${lead.source || 'Website'}</span>
+            <span><strong>Type:</strong> ${lead.booking_type === 'calendly_manual' ? 'Manual Booking' : 'Inquiry Form'}</span>
+          </div>
+        </div>
+        ${lead.message ? `<div class="lead-message">${lead.message}</div>` : ''}
+        <div class="lead-actions">
+          <div class="lead-notes">
+            <textarea placeholder="Add private notes..." onchange="updateLead('${lead.id}', 'notes', this.value)">${lead.notes || ''}</textarea>
+          </div>
+          <select onchange="updateLead('${lead.id}', 'status', this.value)">
+            <option value="new" ${lead.status === 'new' ? 'selected' : ''}>New</option>
+            <option value="contacted" ${lead.status === 'contacted' ? 'selected' : ''}>Contacted</option>
+            <option value="booked" ${lead.status === 'booked' ? 'selected' : ''}>Booked</option>
+            <option value="completed" ${lead.status === 'completed' ? 'selected' : ''}>Completed</option>
+            <option value="archived" ${lead.status === 'archived' ? 'selected' : ''}>Archived</option>
+          </select>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  window.updateLead = async function(id, field, value) {
+    try {
+      const res = await fetch(`/api/leads/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': password
+        },
+        body: JSON.stringify({ [field]: value })
+      });
+      if (!res.ok) throw new Error('Update failed');
+      
+      // If status changed, refresh the styling
+      if (field === 'status') {
+        window.fetchLeads();
+      }
+    } catch (err) {
+      console.error('Failed to update lead:', err);
+      alert('Failed to update lead');
+    }
+  };
+
+  // --- MANUAL BOOKING ---
+  const manualBookingModal = document.getElementById('manualBookingModal');
+
+  window.openManualBookingModal = function() {
+    manualBookingModal.style.display = 'flex';
+  };
+
+  window.closeManualBookingModal = function() {
+    manualBookingModal.style.display = 'none';
+    document.getElementById('manualBookingForm').reset();
+  };
+
+  window.submitManualBooking = async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('mSubmitBtn');
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    const data = {
+      name: document.getElementById('mName').value,
+      email: document.getElementById('mEmail').value,
+      shoot_type: document.getElementById('mType').value,
+      notes: document.getElementById('mNotes').value
+    };
+
+    try {
+      const res = await fetch('/api/leads/manual', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Admin-Password': password
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        window.closeManualBookingModal();
+        window.fetchLeads();
+      } else {
+        alert('Failed to add manual booking');
+      }
+    } catch (err) {
+      alert('Network error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Add Booking';
+    }
+  };
+
 })();
