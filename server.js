@@ -36,10 +36,79 @@ async function sendAdminNotification(leadDetails) {
   }
 }
 
-// --- Middleware ---
+// --- API Routes (Vercel-friendly order) ---
+
+// Auth check (needed for the admin panel)
+app.post('/api/auth', (req, res) => {
+  const { password } = req.body;
+  if (password === ADMIN_PASSWORD) {
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Invalid password' });
+  }
+});
+
+// GET content (public — needed by the frontend)
+app.get('/api/content', async (req, res) => {
+  if (!supabase) {
+    console.error('Supabase client missing - check environment variables.');
+    return res.status(500).json({ error: 'Database connection not configured' });
+  }
+  try {
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('data')
+      .eq('id', 'main_content')
+      .single();
+
+    if (error) {
+       console.warn('Supabase content fetch fail, falling back to local file:', error.message);
+       try {
+         const localData = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8'));
+         return res.json(localData);
+       } catch (fsErr) {
+         return res.status(500).json({ error: 'Failed to read content source' });
+       }
+    }
+    res.json(data.data);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error fetching content' });
+  }
+});
+
+// Health check to verify environment variables
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    supabase: !!supabase,
+    resend: !!resend,
+    adminEmail: !!process.env.ADMIN_EMAIL,
+    nodeEnv: process.env.NODE_ENV || 'development'
+  });
+});
+
+// PUT content (protected)
+app.put('/api/content', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  try {
+    const data = req.body;
+    const { error } = await supabase
+      .from('site_content')
+      .update({ data: data })
+      .eq('id', 'main_content');
+
+    if (error) throw error;
+    try { fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {}
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save content' });
+  }
+});
+
+// --- Middleware & Static (Fallback) ---
 app.use(express.json({ limit: '10mb' }));
 
-// Serve static files (public site)
+// Serve static files (public site) - In Vercel, this is mostly handled by Vercel directly
 app.use(express.static(__dirname, {
   index: 'index.html',
   extensions: ['html']
@@ -73,103 +142,7 @@ function requireAuth(req, res, next) {
 
 // --- API Routes ---
 
-// GET content (public — needed by the frontend)
-app.get('/api/content', async (req, res) => {
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
-  try {
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('data')
-      .eq('id', 'main_content')
-      .single();
-
-    if (error) {
-       // Fallback to local if table is empty or error
-       const localData = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8'));
-       return res.json(localData);
-    }
-    res.json(data.data);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to read content' });
-  }
-});
-
-// PUT content (protected)
-app.put('/api/content', requireAuth, async (req, res) => {
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
-  try {
-    const data = req.body;
-    
-    const { error } = await supabase
-      .from('site_content')
-      .update({ data: data })
-      .eq('id', 'main_content');
-
-    if (error) throw error;
-    
-    // Also update local file purely as a local backup while running locally
-    try { fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {}
-
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Update content error:', err);
-    res.status(500).json({ error: 'Failed to save content' });
-  }
-});
-
-// POST image upload (protected)
-app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file uploaded' });
-  }
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
-
-  try {
-    const ext = path.extname(req.file.originalname);
-    const filename = `portfolio-${Date.now()}${ext}`;
-    
-    const { data, error } = await supabase
-      .storage
-      .from('portfolio')
-      .upload(filename, req.file.buffer, {
-        contentType: req.file.mimetype,
-        upsert: false
-      });
-
-    if (error) throw error;
-
-    const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(filename);
-    res.json({ success: true, path: publicUrlData.publicUrl });
-  } catch (err) {
-    console.error('Upload error:', err);
-    res.status(500).json({ error: 'Failed to upload image' });
-  }
-});
-
-// DELETE image (protected)
-app.delete('/api/image', requireAuth, async (req, res) => {
-  const { path: imgUrl } = req.body;
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
-  
-  try {
-    let filename = imgUrl;
-    if (imgUrl.includes('/portfolio/')) {
-      filename = imgUrl.split('/portfolio/').pop();
-    } else if (imgUrl.startsWith('images/')) {
-       // Legacy local image handling
-       const fullPath = path.join(__dirname, imgUrl);
-       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
-       return res.json({ success: true });
-    }
-
-    const { error } = await supabase.storage.from('portfolio').remove([filename]);
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (err) {
-    console.error('Delete image error:', err);
-    res.status(500).json({ error: 'Failed to delete image' });
-  }
-});
+// Leads routes... (already defined below)
 
 // --- Lead Management Routes (Supabase) ---
 
@@ -254,13 +227,45 @@ app.post('/api/leads/manual', requireAuth, async (req, res) => {
   }
 });
 
-// Auth check
-app.post('/api/auth', (req, res) => {
-  const { password } = req.body;
-  if (password === ADMIN_PASSWORD) {
+// POST image upload (protected)
+app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+
+  try {
+    const ext = path.extname(req.file.originalname);
+    const filename = `portfolio-${Date.now()}${ext}`;
+    const { data, error } = await supabase.storage.from('portfolio').upload(filename, req.file.buffer, {
+      contentType: req.file.mimetype,
+      upsert: false
+    });
+    if (error) throw error;
+    const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(filename);
+    res.json({ success: true, path: publicUrlData.publicUrl });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
+});
+
+// DELETE image (protected)
+app.delete('/api/image', requireAuth, async (req, res) => {
+  const { path: imgUrl } = req.body;
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  try {
+    let filename = imgUrl;
+    if (imgUrl.includes('/portfolio/')) {
+      filename = imgUrl.split('/portfolio/').pop();
+    } else if (imgUrl.startsWith('images/')) {
+       const fullPath = path.join(__dirname, imgUrl);
+       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+       return res.json({ success: true });
+    }
+    const { error } = await supabase.storage.from('portfolio').remove([filename]);
+    if (error) throw error;
     res.json({ success: true });
-  } else {
-    res.status(401).json({ error: 'Invalid password' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete image' });
   }
 });
 
