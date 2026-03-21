@@ -67,6 +67,10 @@ async function sendAdminNotification(leadDetails) {
 // Auth check (needed for the admin panel)
 app.post('/api/auth', (req, res) => {
   const { password } = req.body;
+  console.log('[AUTH DEBUG] body:', JSON.stringify(req.body));
+  console.log('[AUTH DEBUG] password received:', JSON.stringify(password));
+  console.log('[AUTH DEBUG] ADMIN_PASSWORD:', JSON.stringify(ADMIN_PASSWORD));
+  console.log('[AUTH DEBUG] match:', password === ADMIN_PASSWORD);
   if (password === ADMIN_PASSWORD) {
     res.json({ success: true });
   } else {
