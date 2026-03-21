@@ -21,6 +21,32 @@ const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabase
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+// --- Global Middleware ---
+app.use(express.json({ limit: '10mb' }));
+
+// --- Auth Middleware ---
+function requireAuth(req, res, next) {
+  const auth = req.headers['x-admin-password'];
+  if (auth === ADMIN_PASSWORD) {
+    return next();
+  }
+  return res.status(401).json({ error: 'Unauthorized' });
+}
+
+// --- Image Upload Config ---
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  fileFilter: (req, file, cb) => {
+    const allowed = /\.(jpg|jpeg|png|webp|gif)$/i;
+    if (allowed.test(path.extname(file.originalname))) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  }
+});
+
 async function sendAdminNotification(leadDetails) {
   if (!resend || !process.env.ADMIN_EMAIL) return;
   
@@ -105,8 +131,7 @@ app.put('/api/content', requireAuth, async (req, res) => {
   }
 });
 
-// --- Middleware & Static (Fallback) ---
-app.use(express.json({ limit: '10mb' }));
+// --- Static & Legacy Support ---
 
 // Serve static files (public site) - In Vercel, this is mostly handled by Vercel directly
 app.use(express.static(__dirname, {
@@ -116,29 +141,6 @@ app.use(express.static(__dirname, {
 
 // Serve admin panel
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
-
-// --- Image Upload ---
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
-  fileFilter: (req, file, cb) => {
-    const allowed = /\.(jpg|jpeg|png|webp|gif)$/i;
-    if (allowed.test(path.extname(file.originalname))) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-});
-
-// --- Auth Middleware ---
-function requireAuth(req, res, next) {
-  const auth = req.headers['x-admin-password'];
-  if (auth === ADMIN_PASSWORD) {
-    return next();
-  }
-  return res.status(401).json({ error: 'Unauthorized' });
-}
 
 // --- API Routes ---
 
