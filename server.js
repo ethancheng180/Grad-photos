@@ -9,8 +9,8 @@ const { Resend } = require('resend');
 const app = express();
 const PORT = process.env.PORT || 5050;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'studio2026';
-const CONTENT_FILE = path.join(__dirname, 'content.json');
-const IMAGES_DIR = path.join(__dirname, 'images');
+const CONTENT_FILE = path.join(__dirname, 'public', 'content.json');
+const IMAGES_DIR = path.join(__dirname, 'public', 'images');
 
 // --- Supabase & Email Setup ---
 const supabaseUrl = process.env.SUPABASE_URL || '';
@@ -134,18 +134,10 @@ app.put('/api/content', requireAuth, async (req, res) => {
 // --- Static & Legacy Support ---
 
 // Serve static files (public site) - In Vercel, this is mostly handled by Vercel directly
-app.use(express.static(__dirname, {
+app.use(express.static(path.join(__dirname, 'public'), {
   index: 'index.html',
   extensions: ['html']
 }));
-
-// Explicitly serve index.html for the root path
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Serve admin panel
-app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // --- API Routes ---
 
