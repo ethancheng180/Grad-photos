@@ -49,20 +49,8 @@ app.use(express.static(__dirname, {
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
 // --- Image Upload ---
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
-    cb(null, IMAGES_DIR);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = `portfolio-${Date.now()}${ext}`;
-    cb(null, name);
-  }
-});
-
 const upload = multer({
-  storage,
+  storage: multer.memoryStorage(),
   limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
   fileFilter: (req, file, cb) => {
     const allowed = /\.(jpg|jpeg|png|webp|gif)$/i;
@@ -86,48 +74,99 @@ function requireAuth(req, res, next) {
 // --- API Routes ---
 
 // GET content (public — needed by the frontend)
-app.get('/api/content', (req, res) => {
+app.get('/api/content', async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
   try {
-    const data = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8'));
-    res.json(data);
+    const { data, error } = await supabase
+      .from('site_content')
+      .select('data')
+      .eq('id', 'main_content')
+      .single();
+
+    if (error) {
+       // Fallback to local if table is empty or error
+       const localData = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8'));
+       return res.json(localData);
+    }
+    res.json(data.data);
   } catch (err) {
     res.status(500).json({ error: 'Failed to read content' });
   }
 });
 
 // PUT content (protected)
-app.put('/api/content', requireAuth, (req, res) => {
+app.put('/api/content', requireAuth, async (req, res) => {
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
   try {
     const data = req.body;
-    fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8');
+    
+    const { error } = await supabase
+      .from('site_content')
+      .update({ data: data })
+      .eq('id', 'main_content');
+
+    if (error) throw error;
+    
+    // Also update local file purely as a local backup while running locally
+    try { fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {}
+
     res.json({ success: true });
   } catch (err) {
+    console.error('Update content error:', err);
     res.status(500).json({ error: 'Failed to save content' });
   }
 });
 
 // POST image upload (protected)
-app.post('/api/upload', requireAuth, upload.single('image'), (req, res) => {
+app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  const imagePath = `images/${req.file.filename}`;
-  res.json({ success: true, path: imagePath });
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+
+  try {
+    const ext = path.extname(req.file.originalname);
+    const filename = `portfolio-${Date.now()}${ext}`;
+    
+    const { data, error } = await supabase
+      .storage
+      .from('portfolio')
+      .upload(filename, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(filename);
+    res.json({ success: true, path: publicUrlData.publicUrl });
+  } catch (err) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Failed to upload image' });
+  }
 });
 
 // DELETE image (protected)
-app.delete('/api/image', requireAuth, (req, res) => {
-  const { path: imgPath } = req.body;
-  if (!imgPath || !imgPath.startsWith('images/')) {
-    return res.status(400).json({ error: 'Invalid path' });
-  }
-  const fullPath = path.join(__dirname, imgPath);
+app.delete('/api/image', requireAuth, async (req, res) => {
+  const { path: imgUrl } = req.body;
+  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  
   try {
-    if (fs.existsSync(fullPath)) {
-      fs.unlinkSync(fullPath);
+    let filename = imgUrl;
+    if (imgUrl.includes('/portfolio/')) {
+      filename = imgUrl.split('/portfolio/').pop();
+    } else if (imgUrl.startsWith('images/')) {
+       // Legacy local image handling
+       const fullPath = path.join(__dirname, imgUrl);
+       if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+       return res.json({ success: true });
     }
+
+    const { error } = await supabase.storage.from('portfolio').remove([filename]);
+    if (error) throw error;
     res.json({ success: true });
   } catch (err) {
+    console.error('Delete image error:', err);
     res.status(500).json({ error: 'Failed to delete image' });
   }
 });
@@ -226,9 +265,13 @@ app.post('/api/auth', (req, res) => {
 });
 
 // --- Start ---
-app.listen(PORT, () => {
-  console.log(`\n  ✦ Graduation Photos CMS`);
-  console.log(`  ├── Site:  http://localhost:${PORT}`);
-  console.log(`  ├── Admin: http://localhost:${PORT}/admin`);
-  console.log(`  └── Pass:  ${ADMIN_PASSWORD}\n`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`\n  ✦ Graduation Photos CMS (Vercel-Ready)`);
+    console.log(`  ├── Site:  http://localhost:${PORT}`);
+    console.log(`  ├── Admin: http://localhost:${PORT}/admin`);
+    console.log(`  └── Pass:  ${ADMIN_PASSWORD}\n`);
+  });
+}
+
+module.exports = app;
