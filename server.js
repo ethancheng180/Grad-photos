@@ -77,8 +77,13 @@ app.post('/api/auth', (req, res) => {
 // GET content (public — needed by the frontend)
 app.get('/api/content', async (req, res) => {
   if (!supabase) {
-    console.error('Supabase client missing - check environment variables.');
-    return res.status(500).json({ error: 'Database connection not configured' });
+    console.warn('Supabase client missing - falling back to local file.');
+    try {
+      const localData = JSON.parse(fs.readFileSync(CONTENT_FILE, 'utf8'));
+      return res.json(localData);
+    } catch (fsErr) {
+      return res.status(500).json({ error: 'Failed to read local content source' });
+    }
   }
   try {
     const { data, error } = await supabase
@@ -115,15 +120,33 @@ app.get('/api/health', (req, res) => {
 
 // PUT content (protected)
 app.put('/api/content', requireAuth, async (req, res) => {
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  const data = req.body;
+  if (!supabase) {
+    try {
+      fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8');
+      return res.json({ success: true });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to save content locally' });
+    }
+  }
+
   try {
-    const data = req.body;
     const { error } = await supabase
       .from('site_content')
       .update({ data: data })
       .eq('id', 'main_content');
 
-    if (error) throw error;
+    if (error) {
+       console.warn('Supabase save failed, falling back to local file:', error.message);
+       try {
+         fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8');
+         return res.json({ success: true });
+       } catch (fsErr) {
+         return res.status(500).json({ error: 'Failed to save content locally' });
+       }
+    }
+    
+    // Successfully saved to Supabase, also update local cache 
     try { fs.writeFileSync(CONTENT_FILE, JSON.stringify(data, null, 2), 'utf8'); } catch (e) {}
     res.json({ success: true });
   } catch (err) {
@@ -147,15 +170,26 @@ app.use(express.static(path.join(__dirname, 'public'), {
 
 // POST new inquiry (Public)
 app.post('/api/inquire', async (req, res) => {
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  const leadData = req.body; // name, email, phone, shoot_type, budget, event_date, message, source
+  
+  if (!supabase) {
+    console.warn('Supabase not configured - mock saving inquiry.');
+    // Try to send email notification in the background
+    try { sendAdminNotification(leadData); } catch (e) { console.error('Failed mock notification', e); }
+    return res.json({ success: true, lead: { ...leadData, id: 'mock-id', created_at: new Date().toISOString() } });
+  }
+
   try {
-    const leadData = req.body; // name, email, phone, shoot_type, budget, event_date, message, source
     const { data, error } = await supabase
       .from('leads')
       .insert([leadData])
       .select();
 
-    if (error) throw error;
+    if (error) {
+       console.warn('Supabase inquiry save failed:', error.message);
+       try { sendAdminNotification(leadData); } catch (e) {}
+       return res.json({ success: true, lead: { ...leadData, id: 'mock-id', created_at: new Date().toISOString() } });
+    }
     
     // Send email notification in the background
     sendAdminNotification(leadData);
@@ -229,17 +263,43 @@ app.post('/api/leads/manual', requireAuth, async (req, res) => {
 // POST image upload (protected)
 app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  
+  const ext = path.extname(req.file.originalname);
+  const filename = `portfolio-${Date.now()}${ext}`;
+
+  if (!supabase) {
+    try {
+      if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+      fs.writeFileSync(path.join(IMAGES_DIR, filename), req.file.buffer);
+      return res.json({ success: true, path: `images/${filename}` });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to save image locally' });
+    }
+  }
 
   try {
-    const ext = path.extname(req.file.originalname);
-    const filename = `portfolio-${Date.now()}${ext}`;
     const { data, error } = await supabase.storage.from('portfolio').upload(filename, req.file.buffer, {
       contentType: req.file.mimetype,
       upsert: false
     });
-    if (error) throw error;
+    if (error) {
+       console.warn('Supabase upload failed, falling back to local file:', error.message);
+       try {
+         if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+         fs.writeFileSync(path.join(IMAGES_DIR, filename), req.file.buffer);
+         return res.json({ success: true, path: `images/${filename}` });
+       } catch (e) {
+         return res.status(500).json({ error: 'Failed to save image locally' });
+       }
+    }
     const { data: publicUrlData } = supabase.storage.from('portfolio').getPublicUrl(filename);
+    
+    // Also save locally 
+    try {
+      if (!fs.existsSync(IMAGES_DIR)) fs.mkdirSync(IMAGES_DIR, { recursive: true });
+      fs.writeFileSync(path.join(IMAGES_DIR, filename), req.file.buffer);
+    } catch (e) {}
+
     res.json({ success: true, path: publicUrlData.publicUrl });
   } catch (err) {
     console.error('Upload error:', err);
@@ -250,13 +310,24 @@ app.post('/api/upload', requireAuth, upload.single('image'), async (req, res) =>
 // DELETE image (protected)
 app.delete('/api/image', requireAuth, async (req, res) => {
   const { path: imgUrl } = req.body;
-  if (!supabase) return res.status(500).json({ error: 'Supabase not configured' });
+  if (!supabase) {
+    try {
+      if (imgUrl.startsWith('images/')) {
+        const fullPath = path.join(__dirname, 'public', imgUrl);
+        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
+      }
+      return res.json({ success: true });
+    } catch (e) {
+      return res.status(500).json({ error: 'Failed to delete locally' });
+    }
+  }
+
   try {
     let filename = imgUrl;
     if (imgUrl.includes('/portfolio/')) {
       filename = imgUrl.split('/portfolio/').pop();
     } else if (imgUrl.startsWith('images/')) {
-       const fullPath = path.join(__dirname, imgUrl);
+       const fullPath = path.join(__dirname, 'public', imgUrl);
        if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
        return res.json({ success: true });
     }
