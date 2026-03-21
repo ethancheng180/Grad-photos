@@ -114,6 +114,7 @@
     <div class="testimonials-grid" id="testimonialsGrid">
       <!-- Hydrated from CMS -->
     </div>
+    <p class="testimonials-authority">200+ graduates photographed across 7 Southern California campuses</p>
   </section>
 
   <!-- PRICING SECTION -->
@@ -244,7 +245,7 @@
       <p class="cta-eyebrow">Spring 2026 — Spots Filling Fast</p>
       <h2 class="cta-headline">Reserve Your<br>Graduation Session</h2>
       <div class="cta-actions">
-        <a href="#" class="btn btn-primary btn-lg">Book Now</a>
+        <a href="#" class="btn btn-primary btn-lg">Reserve Your Date</a>
         <a href="#" class="btn btn-outline btn-lg" onclick="event.preventDefault(); openInquiryModal();">Group Inquiry</a>
       </div>
       <p class="cta-note">Questions? DM us <a href="#">@studio</a> — we respond within 24 hours.</p>
@@ -274,8 +275,8 @@
     <div class="modal-content">
       <button class="modal-close" onclick="closeInquiryModal()">&times;</button>
       <div class="modal-header">
-        <h3>Submit an Inquiry</h3>
-        <p>Fill out the details below and we will get back to you within 24 hours.</p>
+        <h3>Start a Conversation</h3>
+        <p>Tell us about your vision. We'll respond personally within a few hours.</p>
       </div>
       <form id="inquiryForm" onsubmit="submitInquiry(event)">
         <div class="form-group">
@@ -301,19 +302,19 @@
           </select>
         </div>
         <div class="form-group">
-          <label>Estimated Event/Shoot Date</label>
+          <label>Preferred Shoot Date</label>
           <input type="date" id="inqDate">
         </div>
         <div class="form-group">
           <label>Estimated Budget</label>
-          <input type="text" id="inqBudget" placeholder="e.g. $500">
+          <input type="text" id="inqBudget" placeholder="Optional">
         </div>
         <div class="form-group">
-          <label>Message / Details *</label>
-          <textarea id="inqMessage" rows="4" required placeholder="Tell us about what you're looking for..."></textarea>
+          <label>Tell Us About Your Vision *</label>
+          <textarea id="inqMessage" rows="4" required placeholder="What are you envisioning for your shoot?"></textarea>
         </div>
-        <button type="submit" class="btn btn-primary btn-full" id="inqSubmitBtn">Send Inquiry</button>
-        <div id="inqSuccess" style="display:none; color: green; margin-top: 1rem; text-align: center;">Inquiry sent successfully! We'll be in touch soon.</div>
+        <button type="submit" class="btn btn-primary btn-full" id="inqSubmitBtn">Send Message</button>
+        <div id="inqSuccess" style="display:none; color: green; margin-top: 1rem; text-align: center;">Received — we'll reach out to you personally within a few hours.</div>
         <div id="inqError" style="display:none; color: red; margin-top: 1rem; text-align: center;">Failed to send inquiry. Please try again.</div>
       </form>
     </div>

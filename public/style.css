@@ -610,6 +610,16 @@ a:hover {
   letter-spacing: 0.1em;
 }
 
+.testimonials-authority {
+  margin-top: 3rem;
+  font-size: 0.78rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mid-gray);
+  text-align: center;
+}
+
 @media (max-width: 640px) {
   .testimonials-grid {
     grid-template-columns: 1fr;

@@ -167,7 +167,7 @@
       errorMsg.style.display = 'block';
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Send Inquiry';
+      btn.textContent = 'Send Message';
     }
   };
 
