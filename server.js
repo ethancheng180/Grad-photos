@@ -8,7 +8,7 @@ const { Resend } = require('resend');
 
 const app = express();
 const PORT = process.env.PORT || 5050;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'studio2026';
+const ADMIN_PASSWORD = (process.env.ADMIN_PASSWORD || 'studio2026').trim();
 const CONTENT_FILE = path.join(__dirname, 'public', 'content.json');
 const IMAGES_DIR = path.join(__dirname, 'public', 'images');
 
@@ -67,30 +67,11 @@ async function sendAdminNotification(leadDetails) {
 // Auth check (needed for the admin panel)
 app.post('/api/auth', (req, res) => {
   const { password } = req.body;
-  console.log('[AUTH DEBUG] body:', JSON.stringify(req.body));
-  console.log('[AUTH DEBUG] password received:', JSON.stringify(password));
-  console.log('[AUTH DEBUG] ADMIN_PASSWORD:', JSON.stringify(ADMIN_PASSWORD));
-  console.log('[AUTH DEBUG] match:', password === ADMIN_PASSWORD);
   if (password === ADMIN_PASSWORD) {
     res.json({ success: true });
   } else {
     res.status(401).json({ error: 'Invalid password' });
   }
-});
-
-// Temporary debug endpoint — REMOVE AFTER FIXING
-app.post('/api/debug-auth', (req, res) => {
-  const { password } = req.body;
-  res.json({
-    bodyType: typeof req.body,
-    bodyKeys: Object.keys(req.body || {}),
-    passwordReceived: password,
-    passwordType: typeof password,
-    passwordLength: password ? password.length : 0,
-    adminPasswordLength: ADMIN_PASSWORD.length,
-    adminPasswordFirst3: ADMIN_PASSWORD.substring(0, 3),
-    match: password === ADMIN_PASSWORD
-  });
 });
 
 // GET content (public — needed by the frontend)
