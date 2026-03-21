@@ -105,6 +105,17 @@
     </div>
   </section>
 
+  <!-- TESTIMONIALS SECTION -->
+  <section class="testimonials" id="testimonials">
+    <div class="section-header">
+      <h2 class="section-title">Client Experience</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="testimonials-grid" id="testimonialsGrid">
+      <!-- Hydrated from CMS -->
+    </div>
+  </section>
+
   <!-- PRICING SECTION -->
   <section class="pricing" id="pricing">
     <div class="section-header">
@@ -355,6 +366,21 @@
           const diffTexts = $$('.diff-text');
           (c.differentiator.paragraphs || []).forEach((p, i) => {
             if (diffTexts[i]) diffTexts[i].textContent = p;
+          });
+        }
+
+        // Testimonials
+        if (c.testimonials && c.testimonials.length > 0) {
+          const tGrid = $('#testimonialsGrid');
+          tGrid.innerHTML = '';
+          c.testimonials.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'testimonial-card reveal';
+            card.innerHTML = `
+              <p class="testimonial-quote">"${t.quote}"</p>
+              <p class="testimonial-author">— ${t.author}</p>
+            `;
+            tGrid.appendChild(card);
           });
         }
 

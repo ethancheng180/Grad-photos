@@ -574,6 +574,52 @@ a:hover {
   font-style: italic;
 }
 
+/* --- TESTIMONIALS --- */
+.testimonials {
+  padding: 8rem 2rem;
+  background: var(--off-white);
+  text-align: center;
+}
+
+.testimonials-grid {
+  max-width: 1000px;
+  margin: 3rem auto 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4rem;
+}
+
+.testimonial-card {
+  padding: 2rem;
+}
+
+.testimonial-quote {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-style: italic;
+  line-height: 1.4;
+  margin-bottom: 1.5rem;
+  color: var(--black);
+}
+
+.testimonial-author {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--mid-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+@media (max-width: 640px) {
+  .testimonials-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .testimonial-quote {
+    font-size: 1.25rem;
+  }
+}
+
 /* --- PROCESS --- */
 .process {
   padding: 8rem 2rem;

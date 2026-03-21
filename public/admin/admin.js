@@ -72,6 +72,7 @@
       content = await res.json();
       populateFields();
       renderPortfolio();
+      renderTestimonials();
       renderPricingTiers();
       renderAddons();
       renderProcess();
@@ -210,6 +211,50 @@
       portfolioPreview.appendChild(thumb);
     });
   }
+
+  // --- TESTIMONIALS ---
+  function renderTestimonials() {
+    const container = document.getElementById('testimonialsEditor');
+    if (!container) return;
+    container.innerHTML = '';
+    (content.testimonials || []).forEach((t, i) => {
+      const card = document.createElement('div');
+      card.className = 'testimonial-editor-card';
+      card.innerHTML = `
+        <div class="field-group">
+          <label class="field-label">Quote</label>
+          <textarea class="field-textarea" rows="2" data-t-index="${i}" data-t-field="quote">${t.quote}</textarea>
+        </div>
+        <div class="field-group">
+          <label class="field-label">Author (Name, School)</label>
+          <div style="display:flex; gap:1rem;">
+            <input type="text" class="field-input" value="${t.author}" data-t-index="${i}" data-t-field="author">
+            <button class="btn-admin btn-sm btn-outline-admin" style="border-color: #ff4444; color: #ff4444;" onclick="removeTestimonial(${i})">Remove</button>
+          </div>
+        </div>
+        <hr class="field-divider">
+      `;
+
+      card.querySelectorAll('[data-t-index]').forEach(el => {
+        el.addEventListener('input', () => {
+          content.testimonials[i][el.dataset.tField] = el.value;
+        });
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  window.addTestimonial = function() {
+    if (!content.testimonials) content.testimonials = [];
+    content.testimonials.push({ quote: '', author: '' });
+    renderTestimonials();
+  };
+
+  window.removeTestimonial = function(index) {
+    content.testimonials.splice(index, 1);
+    renderTestimonials();
+  };
 
   // --- PRICING TIERS ---
   function renderPricingTiers() {
