@@ -78,6 +78,21 @@ app.post('/api/auth', (req, res) => {
   }
 });
 
+// Temporary debug endpoint — REMOVE AFTER FIXING
+app.post('/api/debug-auth', (req, res) => {
+  const { password } = req.body;
+  res.json({
+    bodyType: typeof req.body,
+    bodyKeys: Object.keys(req.body || {}),
+    passwordReceived: password,
+    passwordType: typeof password,
+    passwordLength: password ? password.length : 0,
+    adminPasswordLength: ADMIN_PASSWORD.length,
+    adminPasswordFirst3: ADMIN_PASSWORD.substring(0, 3),
+    match: password === ADMIN_PASSWORD
+  });
+});
+
 // GET content (public — needed by the frontend)
 app.get('/api/content', async (req, res) => {
   if (!supabase) {
