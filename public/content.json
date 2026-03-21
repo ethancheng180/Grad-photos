@@ -2,7 +2,7 @@
   "hero": {
     "eyebrow": "Class of 2026 — Limited Spring Dates",
     "headline": "The Editorial Graduation Portrait.<br>Less Basic, More <em>Iconic.</em>",
-    "subheadline": "High-end, magazine-quality portraits for the class of 2026. Spring sessions are almost fully booked.",
+    "subheadline": "High-end, magazine-quality portraits for the class of 2026. Spring sessions are 85% full — book your date today.",
     "schools": "UCLA · USC · UCI · UCSD · Stanford · LMU · SDSU"
   },
   "differentiator": {
@@ -15,15 +15,15 @@
   "testimonials": [
     {
       "quote": "The photos look like they're straight out of Vogue. I've never felt more confident in front of a camera.",
-      "author": "Sarah M., UCLA '24"
+      "author": "Sarah M., UCLA ''24"
     },
     {
       "quote": "Hands down the best investment I made for graduation. Every single shot was editorial quality.",
-      "author": "James L., USC '24"
+      "author": "James L., USC ''24"
     },
     {
-      "quote": "We brought a group of five and every single person got their own hero shot. The whole experience felt effortless.",
-      "author": "Priya K., UCI '25"
+      "quote": "Our group of five all got individual editorial shots and the group photos were next level. Couldn't recommend more.",
+      "author": "Priya K., UCI ''25"
     }
   ],
   "pricing": {
@@ -86,7 +86,7 @@
         "detail": "Per additional change — $50"
       }
     ],
-    "note": "Most groups book 3–4 weeks in advance. A 50% retainer locks your date."
+    "note": "Most groups book 3+ weeks in advance. 50% retainer to lock date."
   },
   "process": [
     {
@@ -97,7 +97,7 @@
     {
       "number": "02",
       "title": "Secure Your Date",
-      "desc": "Pick your preferred date — we hold it for 48 hours while you confirm."
+      "desc": "Select your spot and secure it with a small retainer."
     },
     {
       "number": "03",
@@ -107,13 +107,13 @@
     {
       "number": "04",
       "title": "Gallery Delivery",
-      "desc": "Your private high-res gallery is delivered within 10–14 business days."
+      "desc": "Receive your high-res editorial gallery within 14 days."
     }
   ],
   "cta": {
     "eyebrow": "Spring 2026 — Limited Availability",
     "headline": "Create Something Iconic.<br>Reserve Your Date Today.",
-    "note": "Questions? DM us @studio — we typically reply within a few hours.",
+    "note": "Questions? DM us @studio — we respond within 24 hours.",
     "socialHandle": "@studio",
     "socialLink": "https://instagram.com"
   },

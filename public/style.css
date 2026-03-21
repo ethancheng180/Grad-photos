@@ -724,7 +724,16 @@ a:hover {
   font-weight: 500;
   line-height: 1.1;
   letter-spacing: -0.02em;
-  margin-bottom: 2.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.cta-sub {
+  font-size: 1rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.55);
+  max-width: 440px;
+  margin: 0 auto 2.5rem;
+  line-height: 1.6;
 }
 
 .cta-actions {
