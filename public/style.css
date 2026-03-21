@@ -602,6 +602,17 @@ a:hover {
   color: var(--black);
 }
 
+.testimonial-quote::before {
+  content: '\201C';
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  font-style: normal;
+  line-height: 1;
+  color: var(--gold);
+  margin-bottom: 0.5rem;
+}
+
 .testimonial-author {
   font-size: 0.8rem;
   font-weight: 500;
