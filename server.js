@@ -139,6 +139,11 @@ app.use(express.static(__dirname, {
   extensions: ['html']
 }));
 
+// Explicitly serve index.html for the root path
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
+
 // Serve admin panel
 app.use('/admin', express.static(path.join(__dirname, 'admin')));
 
