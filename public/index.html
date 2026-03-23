@@ -259,8 +259,7 @@
       <span class="footer-logo">STUDIO</span>
       <span class="footer-copy">&copy; 2026 — Editorial Graduation Photography</span>
       <div class="footer-links">
-        <a href="#">Instagram</a>
-        <a href="#">TikTok</a>
+        <a href="https://instagram.com" class="footer-ig-link" target="_blank" rel="noopener noreferrer" aria-label="Instagram">@yourhandle</a>
       </div>
     </div>
   </footer>
@@ -446,6 +445,15 @@
         if (c.cta) {
           if (c.cta.eyebrow) $('.cta-eyebrow').textContent = c.cta.eyebrow;
           if (c.cta.headline) $('.cta-headline').innerHTML = c.cta.headline.replace(/\n/g, '<br>');
+          
+          if (c.cta.socialHandle) {
+            const footerIg = $('.footer-ig-link');
+            if (footerIg) footerIg.textContent = c.cta.socialHandle;
+          }
+          if (c.cta.socialLink) {
+            const footerIg = $('.footer-ig-link');
+            if (footerIg) footerIg.href = c.cta.socialLink;
+          }
         }
 
         // Booking links & Calendly integration
