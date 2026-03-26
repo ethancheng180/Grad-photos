@@ -14,7 +14,7 @@ const IMAGES_DIR = path.join(__dirname, 'public', 'images');
 
 // --- Supabase & Email Setup ---
 const supabaseUrl = process.env.SUPABASE_URL || '';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
 const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 // Optional: Email transport via Resend
@@ -22,7 +22,8 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // --- Global Middleware ---
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // --- Auth Middleware ---
 function requireAuth(req, res, next) {
@@ -36,7 +37,7 @@ function requireAuth(req, res, next) {
 // --- Image Upload Config ---
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
   fileFilter: (req, file, cb) => {
     const allowed = /\.(jpg|jpeg|png|webp|gif)$/i;
     if (allowed.test(path.extname(file.originalname))) {
@@ -105,6 +106,14 @@ app.get('/api/content', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Internal server error fetching content' });
   }
+});
+
+// Supabase config (public — needed for direct browser uploads)
+app.get('/api/supabase-config', (req, res) => {
+  res.json({
+    url: supabaseUrl || '',
+    anonKey: supabaseKey || ''
+  });
 });
 
 // Health check to verify environment variables

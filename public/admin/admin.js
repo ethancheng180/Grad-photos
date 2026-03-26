@@ -149,7 +149,53 @@
     imageUpload.value = '';
   });
 
+  // --- DIRECT SUPABASE UPLOAD ---
+  let supabaseClient = null;
+  let supabaseConfigFetched = false;
+
+  async function getSupabaseClient() {
+    if (supabaseClient) return supabaseClient;
+    if (supabaseConfigFetched) return null; // Already tried, not available
+
+    supabaseConfigFetched = true;
+    try {
+      const res = await fetch('/api/supabase-config');
+      const config = await res.json();
+      if (config.url && config.anonKey && window.supabase) {
+        supabaseClient = window.supabase.createClient(config.url, config.anonKey);
+        return supabaseClient;
+      }
+    } catch (e) {
+      console.warn('Could not init Supabase client, will use server upload:', e);
+    }
+    return null;
+  }
+
   async function uploadImage(file) {
+    const sb = await getSupabaseClient();
+
+    if (sb) {
+      // Direct browser-to-Supabase upload (bypasses Vercel 4.5MB limit)
+      try {
+        const ext = file.name.split('.').pop();
+        const filename = `portfolio-${Date.now()}.${ext}`;
+        const { data, error } = await sb.storage.from('portfolio').upload(filename, file, {
+          contentType: file.type,
+          upsert: false
+        });
+        if (error) throw error;
+        const { data: publicUrlData } = sb.storage.from('portfolio').getPublicUrl(filename);
+        if (!content.portfolio) content.portfolio = [];
+        content.portfolio.push(publicUrlData.publicUrl);
+        renderPortfolio();
+        showSaveStatus('Image uploaded — save to keep changes');
+        return;
+      } catch (err) {
+        console.error('Direct Supabase upload failed, falling back to server:', err);
+      }
+    }
+
+    // Fallback: server-proxied upload (local dev or if Supabase fails)
     const formData = new FormData();
     formData.append('image', file);
     try {
@@ -160,12 +206,16 @@
       });
       const data = await res.json();
       if (data.success) {
+        if (!content.portfolio) content.portfolio = [];
         content.portfolio.push(data.path);
         renderPortfolio();
         showSaveStatus('Image uploaded — save to keep changes');
+      } else {
+        alert('Upload failed: ' + (data.error || 'Server error'));
       }
     } catch (err) {
       console.error('Upload failed:', err);
+      alert('Upload failed. Check Vercel logs or ensure file is under 4.5MB.');
     }
   }
 
@@ -177,7 +227,7 @@
       thumb.draggable = true;
       thumb.dataset.index = index;
       thumb.innerHTML = `
-        <img src="/${imgPath}" alt="Portfolio ${index + 1}">
+        <img src="${imgPath.startsWith('http') ? imgPath : '/' + imgPath}" alt="Portfolio ${index + 1}">
         <div class="thumb-actions">
           <button class="thumb-delete" data-index="${index}" title="Remove">✕</button>
         </div>
